@@ -1,4 +1,4 @@
-# RecallQ — Intelligent Personal File Search System
+# RecallQ — AI Powered Digital Memory & Intelligent File Retrieval System
 
 **Project Type:** MCA Mini Project
 **Project Status:** Under Development
@@ -228,7 +228,7 @@ Tasks:
 
 Initial branch: `payal`
 
-### Member 2 — Frontend Developer
+### Member 2 — Nitish Yadav: Frontend Developer
 
 **Primary responsibility:** React user interface.
 
