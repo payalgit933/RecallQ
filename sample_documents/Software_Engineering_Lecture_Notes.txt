@@ -1,0 +1,19 @@
+SOFTWARE ENGINEERING LECTURE NOTES - UNIT 3 & 4
+Course: MCA / B.Tech Computer Science
+Topic: Software Development Methodologies, Architecture, and Testing
+
+1. Software Development Life Cycle (SDLC)
+Software engineering requires disciplined approaches to designing, implementing, and maintaining software systems.
+- Agile Methodology: Iterative development, continuous customer feedback, daily standups, and sprint planning.
+- Scrum Framework: Sprints of 2 to 4 weeks duration, product backlog grooming, and sprint retrospective meetings.
+- Waterfall Model: Sequential phases of requirements analysis, design, implementation, verification, and maintenance.
+
+2. Software Architecture and Design Patterns
+- Model-View-Controller (MVC): Segregates domain data (Model), user interface (View), and routing logic (Controller).
+- Microservices Architecture: Decentralized, independently deployable services communicating over lightweight REST APIs.
+- Repository Pattern: Isolates the data access layer from business logic for maintainability and unit testing.
+
+3. Software Testing and Quality Assurance
+- Unit Testing: Testing individual functions and modules in isolation using automated testing frameworks.
+- Integration Testing: Verifying correct interaction between integrated modules and external database systems.
+- Code Refactoring: Improving internal code structure without changing external behavior to reduce technical debt.

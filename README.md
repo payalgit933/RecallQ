@@ -1,9 +1,49 @@
 # RecallQ — AI Powered Digital Memory & Intelligent File Retrieval System
 
-**Project Type:** MCA Mini Project
-**Project Status:** Under Development
-**Team Size:** 3 Members
-**Project Repository:** [RecallQ on GitHub](https://github.com/payalgit933/RecallQ)
+**Project Type:** MCA Mini Project  
+**Project Status:** Functional Core Completed (Review 2 Ready)  
+**Team Size:** 3 Members  
+**Project Repository:** [RecallQ on GitHub](https://github.com/payalgit933/RecallQ)  
+
+---
+
+## ⚡ Quick Start & Setup Instructions (Review 2)
+
+### 1. Prerequisites
+- Python 3.10+ (Tested on Python 3.13)
+- Windows PowerShell / Command Prompt or Terminal
+
+### 2. Environment Activation & Dependencies
+```powershell
+# Navigate into project directory
+cd RecallQ
+
+# Activate the virtual environment
+.\backend\venv\Scripts\Activate.ps1
+
+# Install requirements
+pip install -r backend\requirements.txt
+```
+
+### 3. Run the RecallQ Application
+```powershell
+python backend\app.py
+```
+Open your browser and visit:
+* **Landing Page:** [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+* **Workspace:** [http://127.0.0.1:5000/workspace](http://127.0.0.1:5000/workspace)
+
+### 4. Run Automated Test Suite
+```powershell
+python -m unittest tests/test_recallq.py -v
+```
+
+---
+
+## 📚 Review 2 Documentation Links
+- [API Documentation](file:///c:/Users/lenovo/OneDrive/Desktop/RecallQ/docs/api-documentation.md) — Complete specifications for all Flask endpoints.
+- [Demonstration Workflow](file:///c:/Users/lenovo/OneDrive/Desktop/RecallQ/docs/demo-workflow.md) — Step-by-step presentation script for Review 2.
+- [Sample Documents Dataset](file:///c:/Users/lenovo/OneDrive/Desktop/RecallQ/sample_documents/README.md) — Test files for PDF, DOCX, and TXT queries.
 
 ---
 
@@ -485,19 +525,21 @@ The project will also demonstrate practical skills in React, Flask, Python, MySQ
 ## 15. Current Project Status
 
 * [x] GitHub repository created.
-* [x] Team collaborators invited.
-* [x] Git installed and configured for the initial developer.
-* [x] Local branches created and basic Git workflow practised.
-* [x] Initial project README prepared.
-* [ ] All teammates have cloned the repository.
-* [ ] All teammates have verified their branches and pull-request workflow.
-* [ ] Frontend and backend skeletons created.
-* [ ] Basic TXT keyword search implemented.
-* [ ] Document extraction implemented.
-* [ ] MySQL integration completed.
-* [ ] React and Flask integration completed.
-* [ ] Semantic search implemented and tested.
-* [ ] Final testing and documentation completed.
+* [x] Team collaborators invited and roles established.
+* [x] Local branches created and basic Git workflow practiced.
+* [x] Initial project README and architectural plan prepared.
+* [x] Landing page with cinematic intro developed and merged.
+* [x] Workspace frontend integrated with Flask backend.
+* [x] Multi-format document upload (PDF, DOCX, TXT) implemented.
+* [x] Text extraction pipeline with robust error handling implemented.
+* [x] Semantic chunking and passage indexing implemented.
+* [x] Document database storage architecture (`metadata.json`) with SHA-256 deduplication.
+* [x] Privacy-by-design policy implemented (raw uploads automatically purged after indexing).
+* [x] Natural language semantic + keyword hybrid search engine implemented.
+* [x] Explainable AI retrieval (relevance %, highlighted excerpts, reason why matched) implemented.
+* [x] Document memory preview route implemented.
+* [x] Automated test suite created (12/12 unit and integration tests passing).
+* [x] Sample dataset and Review 2 demonstration workflow prepared.
 
 *The checklist reflects planned work and should be updated as tasks are actually completed.*
 
