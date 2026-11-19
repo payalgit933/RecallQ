@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}RecallQ | Preview: {{ document.name }}{% endblock %}
+
+{% block page_css %}
+<style>
+.preview-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #0E121E;
+    border: 1px solid #1F273B;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    color: #E2E8F0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #1F273B;
+    padding-bottom: 20px;
+    margin-bottom: 25px;
+}
+.preview-title h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #F8FAFC;
+    margin: 0 0 8px 0;
+}
+.preview-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.badge-privacy {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.badge-type {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818CF8;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+.badge-meta {
+    background: rgba(148, 163, 184, 0.1);
+    color: #94A3B8;
+}
+.preview-actions a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #1E293B;
+    color: #E2E8F0;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.preview-actions a:hover {
+    background: #334155;
+}
+.privacy-notice {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 0.85rem;
+    color: #93C5FD;
+    line-height: 1.5;
+}
+.preview-body {
+    background: #090C15;
+    border: 1px solid #161D2F;
+    border-radius: 10px;
+    padding: 24px;
+    white-space: pre-wrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #CBD5E1;
+    max-height: 600px;
+    overflow-y: auto;
+}
+.chunks-section {
+    margin-top: 30px;
+}
+.chunks-section h3 {
+    font-size: 1.1rem;
+    color: #F1F5F9;
+    margin-bottom: 12px;
+}
+.chunk-item {
+    background: #111625;
+    border: 1px solid #1E283D;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+.chunk-id {
+    font-weight: 600;
+    color: #818CF8;
+    margin-bottom: 6px;
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-container">
+    <div class="preview-header">
+        <div class="preview-title">
+            <h1>📄 {{ document.name }}</h1>
+            <div class="preview-badges">
+                <span class="badge badge-type">{{ document.extension }}</span>
+                {% if document.privacy_protected %}
+                <span class="badge badge-privacy">🔒 Privacy Processed (Zero Raw Storage)</span>
+                {% endif %}
+                <span class="badge badge-meta">{{ document.metadata.word_count or 0 }} words</span>
+                <span class="badge badge-meta">{{ document.chunks|length }} chunks</span>
+            </div>
+        </div>
+        <div class="preview-actions">
+            <a href="{{ url_for('workspace') }}">← Back to Workspace</a>
+        </div>
+    </div>
+
+    <div class="privacy-notice">
+        🛡️ <strong>RecallQ Privacy Notice:</strong> The original uploaded file was safely purged after indexing. RecallQ retains only the extracted readable text, semantic chunks, and SHA-256 integrity hash for fast, secure retrieval.
+    </div>
+
+    <div class="preview-body">{{ document.extracted_text }}</div>
+
+    {% if document.chunks and document.chunks|length > 1 %}
+    <div class="chunks-section">
+        <h3>Semantic Retrieval Chunks ({{ document.chunks|length }})</h3>
+        {% for chunk in document.chunks %}
+        <div class="chunk-item">
+            <div class="chunk-id">CHUNK #{{ chunk.chunk_id + 1 }} · {{ chunk.word_count }} WORDS</div>
+            <div>{{ chunk.text }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
