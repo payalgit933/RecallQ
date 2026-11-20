@@ -210,6 +210,43 @@ class TestRecallQFlaskAPIs(unittest.TestCase):
         self.assertEqual(preview_res.status_code, 200)
         self.assertIn(b"Privacy Processed", preview_res.data)
 
+    def test_13_image_ocr_extraction(self):
+        img_path = self.sample_dir / "Campus_Placement_Notice.png"
+        self.assertTrue(img_path.exists(), "Sample image file must exist")
+        res = extract_document_text(img_path, ".png")
+        self.assertTrue(res["success"])
+        self.assertGreater(res["word_count"], 10)
+        self.assertIn(res.get("engine"), ["Windows Native OCR", "Tesseract OCR", None])
+        self.assertTrue(any(term in res["text"].lower() for term in ["placement", "recruitment", "eligibility", "campus"]))
+
+    def test_14_redundancy_prevention_deduplication(self):
+        txt_path = self.sample_dir / "Software_Engineering_Lecture_Notes.txt"
+        with open(txt_path, "rb") as f_txt:
+            data = {"files": [(io.BytesIO(f_txt.read()), "Duplicate_Notes_Copy.txt")]}
+            res = self.client.post("/upload", data=data, content_type="multipart/form-data")
+            self.assertIn(res.status_code, [200, 207])
+            json_data = res.get_json()
+            # File should have note indicating redundancy prevention
+            saved_file = json_data["files"][0]
+            self.assertTrue(saved_file.get("redundancy_prevented", False) or "already indexed" in saved_file.get("note", ""))
+
+    def test_15_image_upload_and_ocr_search_workflow(self):
+        img_path = self.sample_dir / "Campus_Placement_Notice.png"
+        with open(img_path, "rb") as f_img:
+            data = {"files": [(io.BytesIO(f_img.read()), img_path.name)]}
+            upload_res = self.client.post("/upload", data=data, content_type="multipart/form-data")
+            self.assertIn(upload_res.status_code, [200, 207])
+
+        # Search for text written in the image screenshot
+        search_res = self.client.get("/search?q=placement+cell+coding+challenge+package")
+        self.assertEqual(search_res.status_code, 200)
+        search_json = search_res.get_json()
+        self.assertGreater(search_json["total_results"], 0)
+
+        # Confirm image was returned as a match
+        matched_names = [r["document_name"] for r in search_json["results"]]
+        self.assertIn(img_path.name, matched_names)
+
 
 if __name__ == "__main__":
     unittest.main()

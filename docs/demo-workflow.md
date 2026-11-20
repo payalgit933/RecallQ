@@ -5,10 +5,13 @@ This guide outlines the step-by-step demonstration procedure for presenting Reca
 ---
 
 ## 1. Objectives to Highlight
-1. **Explainable Retrieval:** Not just returning a file, but explaining *why* it matched and displaying the relevant text excerpt.
+1. **Explainable Retrieval:** Not just returning a file, but explaining *why* it matched and displaying the relevant text excerpt with highlighted terms.
 2. **Natural Language Understanding:** Users don't need exact filenames; they can describe content in everyday conversational English.
-3. **Multi-Format Ingestion:** Seamless processing of **PDF**, **DOCX**, and **TXT** files.
-4. **Privacy by Design:** Raw user files are temporarily processed for text extraction and indexing, then immediately purged from disk—eliminating long-term raw file storage vulnerabilities while retaining full searchable recall.
+3. **Multi-Format Ingestion & OCR:** Seamless processing of **PDF**, **DOCX**, **TXT**, and **Images/Photos (PNG, JPG)** with native Optical Character Recognition (OCR).
+4. **Redundancy Prevention (Deduplication):** Computes cryptographic SHA-256 hashes to prevent redundant uploads and prevent wasted storage.
+5. **Smart Module Filtering:** Instant category exploration for **Documents**, **Images/Photos**, and **All Memories**.
+6. **Privacy by Design:** Raw document uploads are temporarily processed for text extraction and indexing, then immediately purged from disk—eliminating long-term raw file storage vulnerabilities while retaining full searchable recall.
+7. **Simple Light Theme UI:** Clean, modern, highly readable light theme designed for maximum clarity during reviews.
 
 ---
 
@@ -84,17 +87,40 @@ This guide outlines the step-by-step demonstration procedure for presenting Reca
   - Highlight the **87% MATCH · SEMANTIC** badge.
   - Show the excerpt detailing Agile methodology, MVC architecture, and automated unit testing.
 
-### Act 4: Document Memory Preview
+* Test Query 4 (OCR Photo / Screenshot Search):
+  > **"Find the placement notice with coding challenge and package"**
+  - Press Enter or click **Search →**.
+  - Top result returned: `Campus_Placement_Notice.png` (Photo / Screenshot).
+  - Highlight the image thumbnail rendered directly in the search results!
+  - Highlight the extracted OCR text snippet and explainability box:
+    > *"Why this matched: Matched with high relevance based on Windows Native OCR text extraction. The image contains terms 'placement', 'notice', 'coding', 'package'."*
+  - This proves to the review panel that RecallQ searches **inside photos and screenshots using OCR**!
+
+### Act 4: Redundancy Prevention (Deduplication Demo)
+* Try uploading `Software_Engineering_Lecture_Notes.txt` or `Campus_Placement_Notice.png` a second time.
+* **Observe the system response:**
+  - RecallQ immediately detects the duplicate SHA-256 hash.
+  - Status alert: *"Redundancy prevented: File is already indexed in your memory."*
+  - The redundant raw file is deleted, and no duplicate records are added to the memory library.
+
+### Act 5: Category Module Filtering ("Docs", "Photos", "All Files")
+* In the **Your Memory Library** section, click the category cards:
+  - Click **Documents**: Instantly filters down to only PDF, DOCX, and TXT documents.
+  - Click **Images**: Instantly filters down to only OCR-indexed screenshots and photos.
+  - Click **Recently Added**: Displays the most recent uploads sorted chronologically.
+  - Click **All Memories**: Returns to the complete unified digital memory.
+
+### Act 6: Document Memory Preview
 * Click the **Preview Memory** button on any search result (or in the Memory Library table).
 * Explain to the panel:
   > *"Even though the original raw file was purged for privacy, clicking Preview dynamically renders RecallQ's verified memory view: the full extracted readable text, individual semantic chunks, word counts, and cryptographic hash."*
 
-### Act 5: Verification & Automated Tests
+### Act 7: Verification & Automated Tests
 * Open terminal and run:
   ```powershell
   python -m unittest tests/test_recallq.py -v
   ```
-* Show that all 12 automated unit and integration tests pass cleanly in ~9 seconds!
+* Show that all 15 automated unit and integration tests pass cleanly with 100% success!
 
 ---
 

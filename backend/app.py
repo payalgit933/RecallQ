@@ -135,7 +135,7 @@ def upload_files():
             # 2. Compute SHA-256 document integrity hash
             doc_hash = compute_file_hash(destination)
 
-            # Check for duplicate document
+            # Check for duplicate document / redundancy prevention
             existing_doc = storage.find_by_hash(doc_hash)
             if existing_doc:
                 destination.unlink(missing_ok=True)
@@ -146,11 +146,12 @@ def upload_files():
                     "word_count": existing_doc.get("metadata", {}).get("word_count", 0),
                     "chunks": len(existing_doc.get("chunks", [])),
                     "privacy_protected": existing_doc.get("privacy_protected", True),
-                    "note": "Document is already indexed in RecallQ memory."
+                    "redundancy_prevented": True,
+                    "note": f"Redundancy prevented: '{original_name}' is already indexed in RecallQ memory."
                 })
                 continue
 
-            # 3. Document text extraction & semantic chunking
+            # 3. Text extraction, OCR & semantic chunking
             if extension in DOCUMENT_EXTENSIONS:
                 extraction = extract_document_text(destination, extension)
 
@@ -197,7 +198,23 @@ def upload_files():
                 })
 
             else:
-                # Media file (e.g. screenshot/photo) - keep file for preview
+                # Media file (photo/screenshot) - run OCR text extraction
+                extraction = extract_document_text(destination, extension)
+                ocr_text = extraction.get("text", "").strip() if extraction.get("success") else ""
+                
+                if ocr_text:
+                    full_text = ocr_text
+                    chunks = chunk_text(full_text)
+                    word_count = len(full_text.split())
+                    ocr_extracted = True
+                else:
+                    # Clean filename as baseline search representation if photo has no OCR text
+                    stem_clean = Path(original_name).stem.replace("_", " ").replace("-", " ")
+                    full_text = f"Image file: {original_name}. {stem_clean}"
+                    chunks = [full_text]
+                    word_count = len(stem_clean.split())
+                    ocr_extracted = False
+
                 media_record = {
                     "name": original_name,
                     "stored_name": unique_name,
@@ -205,15 +222,17 @@ def upload_files():
                     "size": file_size,
                     "document_hash": doc_hash,
                     "upload_time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-                    "extracted_text": f"Image file {original_name}",
-                    "chunks": [],
+                    "extracted_text": full_text,
+                    "chunks": chunks,
                     "metadata": {
-                        "word_count": 0,
-                        "char_count": 0,
+                        "word_count": word_count,
+                        "char_count": len(full_text),
                         "pages": 1,
-                        "chunk_count": 0
+                        "chunk_count": len(chunks),
+                        "ocr_extracted": ocr_extracted,
+                        "ocr_engine": extraction.get("engine", "None")
                     },
-                    "privacy_protected": False
+                    "privacy_protected": False  # Image preserved for visual recall & preview
                 }
 
                 storage.save_document(unique_name, media_record)
@@ -222,8 +241,9 @@ def upload_files():
                     "name": original_name,
                     "stored_name": unique_name,
                     "size": file_size,
-                    "word_count": 0,
-                    "chunks": 0,
+                    "word_count": word_count,
+                    "chunks": len(chunks),
+                    "ocr_extracted": ocr_extracted,
                     "privacy_protected": False
                 })
 

@@ -20,15 +20,15 @@
 
         <nav class="workspace-nav">
 
-            <a href="#" class="sidebar-link nav-link active" data-filter="all">
+            <a href="#" class="nav-link active" id="navOverview">
                 Overview
             </a>
 
-            <a href="#memories" class="sidebar-link nav-link" data-filter="all">
+            <a href="#memories" class="nav-link" id="navMemories">
                 My Memories
             </a>
 
-            <a href="#timeline" class="nav-link">
+            <a href="#timeline" class="nav-link" id="navTimeline">
                 Timeline
             </a>
 
@@ -338,7 +338,7 @@
         </section>
 
 
-        <!-- MEMORY TIMELINE PREVIEW -->
+        <!-- MEMORY TIMELINE -->
         <section class="timeline-section" id="timeline">
 
             <div class="section-heading">
@@ -349,15 +349,21 @@
                     <h2>Memory Timeline</h2>
 
                     <p>
-                        A clearer view of everything you've collected over time.
+                        A chronological record of everything you've collected and indexed.
                     </p>
                 </div>
 
-                <span class="timeline-icon">◷</span>
+                <div class="timeline-badge-counter" id="timelineStats">
+                    0 memories
+                </div>
 
             </div>
 
-            <div class="timeline-preview">
+            <!-- DYNAMIC CHRONOLOGICAL TIMELINE FEED -->
+            <div class="timeline-feed" id="timelineFeed"></div>
+
+            <!-- EMPTY TIMELINE STATE (when no files yet) -->
+            <div class="timeline-preview" id="timelineEmptyState">
 
                 <div class="timeline-line"></div>
 
@@ -369,8 +375,8 @@
                     <h3>Your timeline will grow with you</h3>
 
                     <p>
-                        As you add more memories, this space will help
-                        you explore your collection over time.
+                        As you upload documents, notes, and photos, this space will arrange
+                        your memories chronologically.
                     </p>
                 </div>
 

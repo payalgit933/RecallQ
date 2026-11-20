@@ -26,6 +26,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchResultCount = document.getElementById("searchResultCount");
     const searchLoading = document.getElementById("searchLoading");
 
+    const timelineFeed = document.getElementById("timelineFeed");
+    const timelineStats = document.getElementById("timelineStats");
+    const timelineEmptyState = document.getElementById("timelineEmptyState");
+
+    const navOverview = document.getElementById("navOverview");
+    const navMemories = document.getElementById("navMemories");
+    const navTimeline = document.getElementById("navTimeline");
+
     // =====================================
     // APPLICATION STATE
     // =====================================
@@ -89,6 +97,33 @@ document.addEventListener("DOMContentLoaded", () => {
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     }
 
+    function formatTimelineDate(isoStr) {
+        if (!isoStr) return "Captured Recently";
+        try {
+            const d = new Date(isoStr);
+            if (isNaN(d.getTime())) return "Captured Recently";
+            const now = new Date();
+            const diffMs = now - d;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (diffMins < 60) {
+                return diffMins <= 1 ? `Just now · ${timeStr}` : `${diffMins} mins ago · ${timeStr}`;
+            }
+            if (diffDays === 0) {
+                return `Today · ${timeStr}`;
+            }
+            if (diffDays === 1) {
+                return `Yesterday · ${timeStr}`;
+            }
+            return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ` · ${timeStr}`;
+        } catch {
+            return "Captured Recently";
+        }
+    }
+
     // =====================================
     // FILE PICKER
     // =====================================
@@ -133,14 +168,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const errors = result.errors || [];
+            const files = result.files || [];
             let statusMessage = result.message || "Upload completed.";
-            if (errors.length) {
+
+            // Redundancy prevention notice
+            const duplicates = files.filter(f => f.redundancy_prevented || f.note);
+            if (duplicates.length) {
+                const dupNames = duplicates.map(f => f.name).join(", ");
+                statusMessage = `Redundancy prevented: ${dupNames} is already indexed in your memory.`;
+            } else if (errors.length) {
                 statusMessage += " (" + errors.join(" | ") + ")";
             }
 
             if (uploadStatus) {
                 uploadStatus.textContent = statusMessage;
-                uploadStatus.style.color = errors.length && !result.files?.length ? "#f87171" : "#34d399";
+                uploadStatus.style.color = errors.length && !files.length ? "#ef4444" : "#10b981";
             }
 
             await loadFiles();
@@ -335,8 +377,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (activeFilter === "document") {
             files = files.filter(f => getFileType(f.name) === "document");
         } else if (activeFilter === "recent") {
-            files.reverse();
-            files = files.slice(0, 5);
+            // Sort by upload_time descending
+            files.sort((a, b) => (b.upload_time || "").localeCompare(a.upload_time || ""));
+            files = files.slice(0, 8);
         }
 
         return files;
@@ -355,11 +398,25 @@ document.addEventListener("DOMContentLoaded", () => {
         filesList.innerHTML = "";
 
         if (!filteredFiles.length) {
+            let emptyTitle = "No files in this section";
+            let emptyMsg = "Upload documents or photos to begin your memory library.";
+
+            if (activeFilter === "image") {
+                emptyTitle = "No photos or screenshots found";
+                emptyMsg = "Upload PNG or JPG images with visible text to experience OCR-powered search.";
+            } else if (activeFilter === "document") {
+                emptyTitle = "No documents found";
+                emptyMsg = "Upload a PDF, DOCX or TXT file to search and retrieve by content.";
+            } else if (activeFilter === "recent") {
+                emptyTitle = "No recent memories";
+                emptyMsg = "Upload files to see your latest activity tracked here.";
+            }
+
             filesList.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">✧</div>
-                    <h3>No files in this section</h3>
-                    <p>Upload a PDF, DOCX or TXT document to begin your memory library.</p>
+                    <h3>${escapeHtml(emptyTitle)}</h3>
+                    <p>${escapeHtml(emptyMsg)}</p>
                 </div>
             `;
             return;
@@ -374,7 +431,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const iconBox = document.createElement("div");
             iconBox.className = "file-type-icon";
-            iconBox.textContent = icon;
+
+            if (type === "image") {
+                const imgThumb = document.createElement("img");
+                imgThumb.src = `/preview/${encodeURIComponent(file.stored_name)}`;
+                imgThumb.alt = file.name;
+                imgThumb.style.width = "100%";
+                imgThumb.style.height = "100%";
+                imgThumb.style.objectFit = "cover";
+                imgThumb.style.borderRadius = "8px";
+                imgThumb.onerror = () => {
+                    iconBox.textContent = "🖼️";
+                };
+                iconBox.appendChild(imgThumb);
+            } else {
+                iconBox.textContent = icon;
+            }
 
             const info = document.createElement("div");
             info.className = "file-row-info";
@@ -383,7 +455,12 @@ document.addEventListener("DOMContentLoaded", () => {
             name.textContent = file.name;
 
             const details = document.createElement("small");
-            const wordMeta = file.word_count ? ` · ${file.word_count} words` : "";
+            let wordMeta = "";
+            if (type === "image") {
+                wordMeta = file.word_count ? ` · ${file.word_count} words (OCR indexed)` : " · Image (OCR indexed)";
+            } else if (file.word_count) {
+                wordMeta = ` · ${file.word_count} words`;
+            }
             const privacyMeta = file.privacy_protected ? " · 🔒 Privacy Processed" : "";
             details.textContent = `${(file.extension || type).toUpperCase()} · ${formatSize(file.size || 0)}${wordMeta}${privacyMeta}`;
 
@@ -433,6 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const result = await response.json();
             uploadedFiles = result.files || [];
             renderFiles();
+            renderTimeline(uploadedFiles);
 
         } catch (error) {
             console.error("File loading error:", error);
@@ -532,11 +610,175 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // =====================================
+    // MEMORY TIMELINE RENDERING
+    // =====================================
+
+    function renderTimeline(files) {
+        if (!timelineFeed) return;
+
+        const timelineFiles = [...(files || [])].sort((a, b) => {
+            const timeA = a.upload_time ? new Date(a.upload_time).getTime() : 0;
+            const timeB = b.upload_time ? new Date(b.upload_time).getTime() : 0;
+            return timeB - timeA;
+        });
+
+        if (timelineStats) {
+            timelineStats.textContent = `${timelineFiles.length} ${
+                timelineFiles.length === 1 ? "memory indexed" : "memories indexed"
+            }`;
+        }
+
+        timelineFeed.innerHTML = "";
+
+        if (!timelineFiles.length) {
+            if (timelineEmptyState) timelineEmptyState.style.display = "flex";
+            return;
+        }
+
+        if (timelineEmptyState) timelineEmptyState.style.display = "none";
+
+        timelineFiles.forEach(file => {
+            const type = getFileType(file.name);
+            const icon = getFileIcon(file.name);
+            const dateStr = formatTimelineDate(file.upload_time);
+
+            const item = document.createElement("div");
+            item.className = "timeline-item";
+
+            // Node with icon or image thumbnail
+            const node = document.createElement("div");
+            node.className = "timeline-node";
+            if (type === "image") {
+                const img = document.createElement("img");
+                img.src = `/preview/${encodeURIComponent(file.stored_name)}`;
+                img.alt = file.name;
+                img.onerror = () => {
+                    node.textContent = "🖼️";
+                };
+                node.appendChild(img);
+            } else {
+                node.textContent = icon;
+            }
+
+            // Card
+            const card = document.createElement("div");
+            card.className = "timeline-card";
+
+            // Header
+            const header = document.createElement("div");
+            header.className = "timeline-card-header";
+
+            const dateLabel = document.createElement("span");
+            dateLabel.className = "timeline-date";
+            dateLabel.innerHTML = `<span>◷</span> ${escapeHtml(dateStr)}`;
+
+            const typeBadge = document.createElement("span");
+            typeBadge.className = "timeline-pill type";
+            typeBadge.textContent = (file.extension || type).replace(".", "").toUpperCase();
+
+            header.append(dateLabel, typeBadge);
+
+            // Title
+            const title = document.createElement("h4");
+            title.className = "timeline-card-title";
+            title.textContent = file.name;
+
+            // Metadata pills
+            const meta = document.createElement("div");
+            meta.className = "timeline-card-meta";
+
+            const sizePill = document.createElement("span");
+            sizePill.className = "timeline-pill words";
+            sizePill.textContent = formatSize(file.size || 0);
+            meta.appendChild(sizePill);
+
+            if (file.word_count) {
+                const wordsPill = document.createElement("span");
+                wordsPill.className = "timeline-pill words";
+                wordsPill.textContent = `${file.word_count} words`;
+                meta.appendChild(wordsPill);
+            }
+
+            if (type === "image") {
+                const ocrPill = document.createElement("span");
+                ocrPill.className = "timeline-pill ocr";
+                ocrPill.textContent = "🖼️ OCR Searchable";
+                meta.appendChild(ocrPill);
+            } else {
+                const privPill = document.createElement("span");
+                privPill.className = "timeline-pill privacy";
+                privPill.textContent = "🔒 Privacy Processed";
+                meta.appendChild(privPill);
+            }
+
+            // Actions
+            const actions = document.createElement("div");
+            actions.className = "timeline-card-actions";
+
+            const previewBtn = document.createElement("button");
+            previewBtn.className = "timeline-action-btn";
+            previewBtn.innerHTML = `<span>↗</span> Preview Memory`;
+            previewBtn.addEventListener("click", () => {
+                window.open(
+                    `/preview/${encodeURIComponent(file.stored_name)}`,
+                    "_blank",
+                    "noopener"
+                );
+            });
+            actions.appendChild(previewBtn);
+
+            card.append(header, title, meta, actions);
+            item.append(node, card);
+            timelineFeed.appendChild(item);
+        });
+    }
+
+    // =====================================
     // NAVIGATION & CATEGORY FILTERS
     // =====================================
 
+    function setActiveNavLink(activeEl) {
+        document.querySelectorAll(".workspace-nav .nav-link").forEach(link => {
+            link.classList.toggle("active", link === activeEl);
+        });
+    }
+
+    if (navOverview) {
+        navOverview.addEventListener("click", e => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            setActiveNavLink(navOverview);
+        });
+    }
+
+    if (navMemories) {
+        navMemories.addEventListener("click", e => {
+            e.preventDefault();
+            activeFilter = "all";
+            if (filesHeading) filesHeading.textContent = "All Memories";
+            updateActiveNavigation();
+            renderFiles();
+            const target = document.getElementById("memories");
+            if (target) {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+            setActiveNavLink(navMemories);
+        });
+    }
+
+    if (navTimeline) {
+        navTimeline.addEventListener("click", e => {
+            e.preventDefault();
+            const target = document.getElementById("timeline");
+            if (target) {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+            setActiveNavLink(navTimeline);
+        });
+    }
+
     function updateActiveNavigation() {
-        document.querySelectorAll("[data-filter]").forEach(item => {
+        document.querySelectorAll(".category-card[data-filter]").forEach(item => {
             item.classList.toggle(
                 "active",
                 item.dataset.filter === activeFilter
@@ -544,20 +786,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    document.querySelectorAll("[data-filter]").forEach(button => {
+    document.querySelectorAll(".category-card[data-filter]").forEach(button => {
         button.addEventListener("click", event => {
             event.preventDefault();
             activeFilter = button.dataset.filter;
 
             if (filesHeading) {
                 if (activeFilter === "all") filesHeading.textContent = "All Memories";
-                else if (activeFilter === "image") filesHeading.textContent = "Images";
-                else if (activeFilter === "document") filesHeading.textContent = "Documents";
+                else if (activeFilter === "image") filesHeading.textContent = "Images & Photos (OCR Indexed)";
+                else if (activeFilter === "document") filesHeading.textContent = "Documents (PDF, DOCX, TXT)";
                 else if (activeFilter === "recent") filesHeading.textContent = "Recently Added";
             }
 
             updateActiveNavigation();
             renderFiles();
+
+            // Smoothly scroll down to the collection list
+            const target = document.getElementById("filesHeading") || document.getElementById("memories");
+            if (target) {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
         });
     });
 
@@ -567,6 +815,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (filesHeading) filesHeading.textContent = "All Memories";
             updateActiveNavigation();
             renderFiles();
+            const target = document.getElementById("filesHeading") || document.getElementById("memories");
+            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
         });
     }
 

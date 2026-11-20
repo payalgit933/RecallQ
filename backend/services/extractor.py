@@ -185,9 +185,62 @@ def extract_text_from_txt(file_path: Path) -> Dict[str, Any]:
     }
 
 
+def extract_text_from_image(file_path: Path) -> Dict[str, Any]:
+    """
+    Extract readable text from an image (PNG, JPG, JPEG) using Windows native OCR (winocr)
+    with fallback to pytesseract or graceful empty handling.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return {
+            "success": False,
+            "text": "",
+            "pages": 1,
+            "error": "Pillow (PIL) image processing library is not installed."
+        }
+
+    ocr_text = ""
+    ocr_engine_used = None
+
+    # 1. Primary OCR: Windows Native Media OCR (winocr)
+    try:
+        import winocr
+        with Image.open(str(file_path)) as img:
+            if img.mode not in ("RGB", "L"):
+                img = img.convert("RGB")
+            # Run Windows native OCR
+            res = winocr.recognize_pil_sync(img, "en-US")
+            if isinstance(res, dict) and "text" in res:
+                ocr_text = res.get("text", "").strip()
+                ocr_engine_used = "Windows Native OCR"
+            elif isinstance(res, str):
+                ocr_text = res.strip()
+                ocr_engine_used = "Windows Native OCR"
+    except Exception as win_err:
+        # 2. Secondary OCR Fallback: pytesseract (if Tesseract binary is configured)
+        try:
+            import pytesseract
+            with Image.open(str(file_path)) as img:
+                ocr_text = pytesseract.image_to_string(img).strip()
+                if ocr_text:
+                    ocr_engine_used = "Tesseract OCR"
+        except Exception:
+            pass
+
+    return {
+        "success": True,
+        "text": ocr_text,
+        "pages": 1,
+        "engine": ocr_engine_used,
+        "error": None
+    }
+
+
 def extract_document_text(file_path: Path, extension: str) -> Dict[str, Any]:
     """
     Extract readable text based on file extension.
+    Supports PDF, DOCX, TXT, and Image OCR (PNG, JPG, JPEG).
     Returns standard dictionary with text, stats, and status.
     """
     ext = extension.lower()
@@ -200,6 +253,8 @@ def extract_document_text(file_path: Path, extension: str) -> Dict[str, Any]:
         result = extract_text_from_docx(file_path)
     elif ext in [".txt", ".text", ".md"]:
         result = extract_text_from_txt(file_path)
+    elif ext in [".png", ".jpg", ".jpeg"]:
+        result = extract_text_from_image(file_path)
     else:
         return {
             "success": False,

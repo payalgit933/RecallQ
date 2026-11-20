@@ -124,6 +124,7 @@ class DocumentStorage:
                 "privacy_protected": doc.get("privacy_protected", True),
                 "has_text": bool(doc.get("extracted_text")),
                 "chunk_count": len(doc.get("chunks", [])),
+                "ocr_extracted": doc.get("metadata", {}).get("ocr_extracted", False),
             })
 
         documents.sort(key=lambda item: item["name"].lower())

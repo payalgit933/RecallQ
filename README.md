@@ -79,15 +79,16 @@ Therefore, a system is needed that can search document contents, identify releva
 
 ## 3. Project Objectives
 
-* Develop a simple interface for searching personal documents.
-* Allow users to upload supported document files.
-* Extract and process text from documents.
-* Search document contents using keywords and phrases.
-* Rank matching documents according to their relevance.
-* Display a relevant text snippet explaining each match.
-* Store document information and extracted text in a database.
-* Extend the system with semantic search to identify related meanings, even when exact keywords differ.
-* Provide a user-friendly and maintainable application.
+* Develop a simple, clean **Light Theme** interface for searching personal documents and photos.
+* Allow users to upload supported document files (PDF, DOCX, TXT) and images (PNG, JPG).
+* Extract readable text from documents and apply **Optical Character Recognition (OCR)** on images.
+* **Remove redundancy** using cryptographic SHA-256 hashes to prevent duplicate file uploads.
+* Provide category navigation modules (**Documents**, **Images/Photos**, **All Memories**).
+* Search document and photo contents using natural human language queries.
+* Rank matching documents according to their relevance using TF-IDF passage chunking and cosine similarity.
+* Display relevant text snippets and transparent explainability reasons ("Why this matched").
+* Store document information, metadata, hashes, and chunks in persistent storage.
+* Protect privacy by immediately purging temporary raw uploads after indexing.
 
 ---
 
